@@ -33,7 +33,7 @@ pip install -r requirements.txt
 - Run `check.py` file
 - The result is displayed in `final_result.txt`
 ```diff
-- NOTE:
+@@NOTE:@@
 - A line (testcase) format in input.txt: <para1> <para2>
 - Example testcases are saved in multi_TestCase folder
 - testcase5 (overflow), and testcase6 (underflow) are used for build.txt, not input.txt.
