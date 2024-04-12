@@ -24,6 +24,7 @@ reg is_normalized;
 //variables for exponent calculation
 reg [E_WIDTH : 0] add_res; // result of exponent addition
 //output
+reg multi_with_zero;
 reg [F_WIDTH - 1 : 0] F_out; // the fraction of output
 reg [E_WIDTH - 1 : 0] E_out; // the exponent of output 
 reg S_out;                   // the sign of output
@@ -40,6 +41,7 @@ always @(para1 or para2) begin
     S_para2 = {1'b1, para2[F_WIDTH - 1 : 0]};
     E_para1 = para1[`INPUT_WIDTH - 2 : F_WIDTH];
     E_para2 = para2[`INPUT_WIDTH - 2 : F_WIDTH];
+    multi_with_zero = ~|para1 | ~|para2;
 end
 // multiply and normalize significand elements
 always @(S_para1 or S_para2) begin
@@ -54,7 +56,7 @@ always @(S_para1 or S_para2) begin
     if (handled_multi_res[F_WIDTH + 1] == 1'b1) begin
         // normalizing and rounding case
         is_normalized = 1'b1;
-        F_out = handled_multi_res[F_WIDTH : 1] + handled_multi_res[0];
+        F_out = handled_multi_res[F_WIDTH : 1];  // + handled_multi_res[0];
     end 
     else begin
         // not normalizing case
@@ -89,9 +91,12 @@ always @(para1, para2) begin
     S_out = para1[`INPUT_WIDTH - 1] ^ para2[`INPUT_WIDTH - 1];
 end
 //--------------------------------------------
-always @(underflow, overflow, S_out, E_out, F_out) begin
-    under_overflow = underflow | overflow;
-    if (underflow == 1'b1) begin
+always @(underflow, overflow, S_out, E_out, F_out, multi_with_zero) begin
+    under_overflow = (multi_with_zero) ? 1'b0 :  (underflow | overflow) ;
+    if (multi_with_zero == 1'b1) begin
+        out = 32'd0;
+    end
+    else if (underflow == 1'b1) begin
         // underflow case:
         out = 32'hff800000;
     end
