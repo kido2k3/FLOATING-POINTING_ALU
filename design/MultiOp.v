@@ -27,7 +27,8 @@ reg [E_WIDTH : 0] add_res; // result of exponent addition
 reg [F_WIDTH - 1 : 0] F_out; // the fraction of output
 reg [E_WIDTH - 1 : 0] E_out; // the exponent of output 
 reg S_out;                   // the sign of output
-
+reg overflow;
+reg underflow;
 //  separate parameters into sub-parts
 always @(para1 or para2) begin
     // 32-bit floating-point number format
@@ -64,17 +65,41 @@ end
 //-------------------------------------------
 // calculate exponent
 always @(E_para1, E_para2, is_normalized) begin
+    add_res = E_para1 + E_para2 + is_normalized;
+    overflow = 1'b0;
+    underflow = 1'b0;
+    E_out = 8'd0;
+    if (add_res >= 9'd255 + E_BIAS) begin
+        // overflow case
+        overflow = 1'b1;
+    end
+    else if (add_res >= E_BIAS) begin
+        // normal case
+        E_out = add_res - E_BIAS;
+    end
+    else begin
+        // underflow case
+        underflow = 1'b1;
+    end
     
 end
 //--------------------------------------------
 // determine the sign part 
 always @(para1, para2) begin
-    S_out = para1 ^ para2;
+    S_out = para1[`INPUT_WIDTH - 1] ^ para2[`INPUT_WIDTH - 1];
 end
 //--------------------------------------------
-always @(under_overflow) begin
-    if (under_overflow) begin
-        
+always @(underflow, overflow, S_out, E_out, F_out) begin
+    under_overflow = underflow | overflow;
+    if (underflow == 1'b1) begin
+        // underflow case:
+        out = 32'hff800000;
+    end
+    else if (overflow == 1'b1) begin
+        out = 32'h7f800000;
+    end
+    else begin
+        out = {S_out, E_out, F_out};
     end
 end
 endmodule
