@@ -14,7 +14,7 @@ parameter SIGNI = 23;
 // initialize variables
 reg [SIGNI: 0] signiPara1 = 0;
 reg [SIGNI: 0] signiPara2 = 0;
-reg [SIGNI: 0] significand = 0;
+reg [SIGNI: 0] significand = 24'hFFFFFF;
 
 reg [EXPO_LENGTH: 0] dis = 0;
 reg [EXPO_LENGTH: 0] expo = 0;
@@ -22,7 +22,6 @@ reg [EXPO_LENGTH: 0] expo_normalize = 0;
 
 reg sign = 0;
 reg Cout = 0;
-reg flag = 0;
 
 always @(*) begin
     assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]};
@@ -40,6 +39,7 @@ always @(*) begin
         assign signiPara2 = signiPara2 >> dis;
         assign sign = para1[SIGN];
     end    
+
 end
 
 always @(signiPara1, signiPara2) begin
@@ -47,6 +47,12 @@ always @(signiPara1, signiPara2) begin
 
     if(para2[SIGN] == para1[SIGN]) begin
         assign {Cout, significand} = signiPara1 + signiPara2;
+    end
+    else begin
+        if(signiPara1 < signiPara2) begin
+            assign {Cout, significand} = signiPara2 - signiPara1;    
+        end
+        else assign {Cout, significand} = signiPara1 - signiPara2;
     end
 
     if(Cout == 1) begin
@@ -59,8 +65,8 @@ always @(signiPara1, signiPara2) begin
     
 end
 
-always @(significand[SIGNI], expo_normalize) begin
-    if(significand[SIGNI] == 0) begin
+always @(negedge significand[SIGNI]) begin
+    while(significand[SIGNI] == 0) begin
         assign significand = significand << 1;
         assign expo_normalize = expo_normalize - 1;
     end
