@@ -12,8 +12,8 @@ parameter EXPO_LENGTH = 7;
 parameter SIGNI = 23;
 
 // initialize variables
-reg [SIGNI: 0] signiPara1 = {1, para1[SIGNI - 1: 0]};
-reg [SIGNI: 0] signiPara2 = {1, para2[SIGNI - 1: 0]};
+reg [SIGNI: 0] signiPara1 = {1'b1, para1[SIGNI - 1: 0]};
+reg [SIGNI: 0] signiPara2 = {1'b1, para2[SIGNI - 1: 0]};
 reg [SIGNI: 0] significand = 0;
 reg [EXPO_LENGTH: 0] expo1 = para1[EXPO: EXPO - EXPO_LENGTH];
 reg [EXPO_LENGTH: 0] expo2 = para2[EXPO: EXPO - EXPO_LENGTH];
@@ -51,9 +51,11 @@ if(Cout == 1) begin
     assign significand[SIGNI] = 1;
 end
 
-for(;significand[SIGNI] == 0;) begin
-    assign significand = significand << 1;
-    assign expo1 -= 1;
+always begin
+    while(significand[SIGNI] == 0) begin
+        assign significand = significand << 1;
+        assign expo1 = expo1 - 1;
+    end    
 end
 
 assign out = {sign, expo1, significand[SIGNI - 1: 0]};

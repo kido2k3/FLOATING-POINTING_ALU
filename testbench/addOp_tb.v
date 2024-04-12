@@ -6,7 +6,7 @@ module AddOp_tb;
     wire [31:0] out;
     wire under_overflow;
 
-    bound_flasher uut(.para1(para1), .para2(para2), .out(out), .under_overflow(under_overflow));
+    AddOp uut(.para1(para1), .para2(para2), .out(out), .under_overflow(under_overflow));
     
     initial begin
         // $monitor("At time %t : flick = %b - rst = %b - clk = %b - id = %d - led = %d ", $time, flick, rst, clk, id, led);
@@ -38,7 +38,7 @@ module AddOp_tb;
 
     initial begin
     $recordfile ("wave");
-    $recordvars ("depth=0", bound_flasher_tb);
+    $recordvars ("depth=0", AddOp_tb);
     end
     
 endmodule
