@@ -1,0 +1,10 @@
+{
+    "cSpell.enableFiletypes": [
+        "verilog"
+    ],
+    "cSpell.words": [
+        "endmodule",
+        "localparam",
+        "significand"
+    ]
+}
