@@ -94,6 +94,7 @@ end
 always @(underflow, overflow, S_out, E_out, F_out, multi_with_zero) begin
     under_overflow = (multi_with_zero) ? 1'b0 :  (underflow | overflow) ;
     if (multi_with_zero == 1'b1) begin
+        // zero case:
         out = 32'd0;
     end
     else if (underflow == 1'b1) begin
@@ -101,9 +102,11 @@ always @(underflow, overflow, S_out, E_out, F_out, multi_with_zero) begin
         out = 32'hff800000;
     end
     else if (overflow == 1'b1) begin
+        // overflow case:
         out = 32'h7f800000;
     end
     else begin
+        // normal case:
         out = {S_out, E_out, F_out};
     end
 end
