@@ -15,6 +15,8 @@ parameter SIGNI = 23;
 reg [SIGNI: 0] signiPara1 = 0;
 reg [SIGNI: 0] signiPara2 = 0;
 reg [SIGNI: 0] significand = 24'hFFFFFF;
+reg [SIGNI: 0] temp = 0;
+reg [SIGNI: 0] dif = 0;
 
 reg [EXPO_LENGTH: 0] dis = 0;
 reg [EXPO_LENGTH: 0] expo = 0;
@@ -66,10 +68,34 @@ always @(signiPara1, signiPara2) begin
 end
 
 always @(negedge significand[SIGNI]) begin
-    while(significand[SIGNI] == 0) begin
-        assign significand = significand << 1;
-        assign expo_normalize = expo_normalize - 1;
+    if(significand[SIGNI] == 0) begin
+        assign significand_temp = significand;
+        assign temp = significand_temp >> 1;
+        assign significand_temp = significand_temp | temp;
+
+        assign temp = significand_temp >> 2;
+        assign significand_temp = significand_temp | temp;
+        
+        assign temp = significand_temp >> 4;
+        assign significand_temp = significand_temp | temp;
+        
+        assign temp = significand_temp >> 8;
+        assign significand_temp = significand_temp | temp;
+
+        assign temp = significand_temp >> 16;
+        assign significand_temp = significand_temp | temp;
+
+        assign temp = significand_temp >>> 1;
+
+        assign dif = significand_temp - temp;
+        
+        assign significand = significand << dif;
+        assign expo_normalize = expo_normalize - dif;
     end
+    // while(significand[SIGNI] == 0) begin
+    //     assign significand = significand << 1;
+    //     assign expo_normalize = expo_normalize - 1;
+    // end
 end
 
 assign out = {sign, expo_normalize, significand[SIGNI - 1: 0]};
