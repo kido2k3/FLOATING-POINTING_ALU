@@ -8,6 +8,7 @@ pip install -r requirements.txt
 ```
 
 - Create a testcase in `input.txt`
+- Tranform the desired operator in `line 39 build.py`
 - Run `build.py`
 - In testbench file, add the following code:
 ```verilog
