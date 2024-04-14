@@ -1,2 +1,4 @@
+#ignore log of input and output
+auto_test/
 #ignore cache of vscode
 .vscode
