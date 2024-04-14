@@ -15,38 +15,35 @@ parameter SIGNI = 23;
 reg [SIGNI: 0] signiPara1 = 0;
 reg [SIGNI: 0] signiPara2 = 0;
 reg [SIGNI: 0] significand = 24'hFFFFFF;
-reg [SIGNI: 0] temp = 0;
-reg [SIGNI: 0] dif = 0;
 
-reg [EXPO_LENGTH: 0] dis = 0;
 reg [EXPO_LENGTH: 0] expo = 0;
 reg [EXPO_LENGTH: 0] expo_normalize = 0;
+reg [EXPO_LENGTH: 0] dis = 0;
 
+reg [4: 0] dif = 0;
 reg sign = 0;
 reg Cout = 0;
 
-always @(*) begin
-    assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]};
-    assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]};
-
+always @(signiPara1, signiPara2) begin
     if(para1[EXPO: EXPO - EXPO_LENGTH] < para2[EXPO: EXPO - EXPO_LENGTH]) begin
         assign dis = para2[EXPO: EXPO - EXPO_LENGTH] - para1[EXPO: EXPO - EXPO_LENGTH];
         assign expo = para2[EXPO: EXPO - EXPO_LENGTH];
-        assign signiPara1 = signiPara1 >> dis;
+        assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]} >> dis;
+        assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]};
         assign sign = para2[SIGN];
     end
     else begin
         assign dis = para1[EXPO: EXPO - EXPO_LENGTH] - para2[EXPO: EXPO - EXPO_LENGTH];
         assign expo = para1[EXPO: EXPO - EXPO_LENGTH];
-        assign signiPara2 = signiPara2 >> dis;
+        assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]};
+        assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]} >> dis;
         assign sign = para1[SIGN];
-    end    
-
+    end
+    
+    assign expo_normalize = expo;
 end
 
 always @(signiPara1, signiPara2) begin
-    assign expo_normalize = expo;
-
     if(para2[SIGN] == para1[SIGN]) begin
         assign {Cout, significand} = signiPara1 + signiPara2;
     end
@@ -58,44 +55,20 @@ always @(signiPara1, signiPara2) begin
     end
 
     if(Cout == 1) begin
-        assign significand = significand >> 1;
-        assign significand = significand + 2**SIGNI;
+        assign significand = (significand >>> 1) + (1 <<< SIGNI);
         assign expo_normalize = expo_normalize + 1;
+        assign Cout = 0;
     end    
     else significand = significand;
-
     
+    assign dif = SIGNI - $clog2(significand) + 1;
 end
 
-always @(negedge significand[SIGNI]) begin
-    if(significand[SIGNI] == 0) begin
-        assign significand_temp = significand;
-        assign temp = significand_temp >> 1;
-        assign significand_temp = significand_temp | temp;
-
-        assign temp = significand_temp >> 2;
-        assign significand_temp = significand_temp | temp;
-        
-        assign temp = significand_temp >> 4;
-        assign significand_temp = significand_temp | temp;
-        
-        assign temp = significand_temp >> 8;
-        assign significand_temp = significand_temp | temp;
-
-        assign temp = significand_temp >> 16;
-        assign significand_temp = significand_temp | temp;
-
-        assign temp = significand_temp >>> 1;
-
-        assign dif = significand_temp - temp;
-        
+always @(dif) begin
+    if(dif != 0) begin        
         assign significand = significand << dif;
         assign expo_normalize = expo_normalize - dif;
-    end
-    // while(significand[SIGNI] == 0) begin
-    //     assign significand = significand << 1;
-    //     assign expo_normalize = expo_normalize - 1;
-    // end
+    end    
 end
 
 assign out = {sign, expo_normalize, significand[SIGNI - 1: 0]};

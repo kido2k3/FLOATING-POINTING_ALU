@@ -9,7 +9,6 @@ module SubOp_tb;
     SubOp uut(.para1(para1), .para2(para2), .out(out), .under_overflow(under_overflow));
     
     initial begin
-        // $monitor("At time %t : flick = %b - rst = %b - clk = %b - id = %d - led = %d ", $time, flick, rst, clk, id, led);
         $monitor("At time %t : para1 = %h - para2 = %h = out = %h - unter_overflow = %b ", $time, para1, para2, out, under_overflow);
     end
 

@@ -1,9 +1,2 @@
 1: pass
-2: pass
-3: pass
-4: pass
-5: pass
-6: pass
-7: pass
-8: pass
-Pass 8/8 test cases
+Pass 1/8 test cases

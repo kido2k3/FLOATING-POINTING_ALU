@@ -33,7 +33,7 @@ except:
 try:
     f = open("output_py.txt", "w")
     for i in range(len(real1)):
-        num = real1[i]*real2[i]
+        num = real1[i]+real2[i]
         f.write(f"{IEEE754(num, 1).hex()[0]}\n")
     f.close()
 except:
