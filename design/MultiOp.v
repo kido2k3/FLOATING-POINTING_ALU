@@ -1,12 +1,12 @@
 // Multiplication operators between two floating-point numbers
-`define INPUT_WIDTH 32  // The width of input (32 or 64 bits)
+`define INPUT_WIDTH 32 
 module MultiOp(
     output reg [`INPUT_WIDTH - 1 : 0] out,
     output reg under_overflow,
     input [`INPUT_WIDTH - 1 : 0] para1,
     input [`INPUT_WIDTH - 1 : 0] para2
 );
-    
+//parameters
 localparam E_WIDTH = 8;         // The width of exponent parts
 localparam F_WIDTH = 23;        // The width of fraction parts
 localparam E_BIAS = 127;        // The bias of exponent parts
