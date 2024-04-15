@@ -1,78 +1,98 @@
 // Addition operators between two floating-point numbers
+`define INPUT_WIDTH 32
 module AddOp (
-    output [31:0] out,
-    output under_overflow,
-    input [31:0] para1,
-    input [31:0] para2
+    output reg [`INPUT_WIDTH - 1 : 0] out,
+    output reg under_overflow,
+    input [`INPUT_WIDTH - 1 : 0] para1,
+    input [`INPUT_WIDTH - 1 : 0] para2
 );
-//parameter
-parameter SIGN = 31;
-parameter EXPO = 30;
-parameter EXPO_LENGTH = 7;
-parameter SIGNI = 23;
+//parameters
+localparam E_WIDTH = 8;         // The width of exponent parts
+localparam F_WIDTH = 23;        // The width of fraction parts
 
 // initialize variables
-reg [SIGNI: 0] signiPara1 = 0;
-reg [SIGNI: 0] signiPara2 = 0;
-reg [SIGNI: 0] significand = 24'hFFFFFF;
+reg [`INPUT_WIDTH - 1 : 0] op1;  // the abs(op1) must be greater or equal than abs(op2)
+reg [`INPUT_WIDTH - 1 : 0] op2;
 
-reg [EXPO_LENGTH: 0] expo = 0;
-reg [EXPO_LENGTH: 0] expo_normalize = 0;
-reg [EXPO_LENGTH: 0] dis = 0;
+reg [F_WIDTH : 0] S_op1; // the significand of op 24 bits
+reg [F_WIDTH : 0] S_op2; 
+reg [E_WIDTH - 1 : 0] E_op1; // the exponent of op 
+reg [E_WIDTH - 1 : 0] E_op2;  
+                                // sign of 2 op is the MSB bit
+// variables for calculation
+reg operator;       // 0: add (if signs of parameters are alike); 1: sub (if signs of parameters are different)
+reg [F_WIDTH : 0] S_shifted_op2; 
+wire [F_WIDTH + 1 : 0] ALU_result; // 25-bit result 
+reg [F_WIDTH + 1 : 0] ALU_pos_result; // 25-bit positive result
+wire [F_WIDTH - 1 : 0] normalized_result; // 23-bit normalized result
+wire [4 : 0] shift_times;
 
-reg [4: 0] dif = 0;
-reg sign = 0;
-reg Cout = 0;
+// output
+reg S_out; 
+reg [E_WIDTH - 1 : 0] E_out; 
+reg [F_WIDTH - 1 : 0] F_out;
 
-always @(signiPara1, signiPara2) begin
-    if(para1[EXPO: EXPO - EXPO_LENGTH] < para2[EXPO: EXPO - EXPO_LENGTH]) begin
-        assign dis = para2[EXPO: EXPO - EXPO_LENGTH] - para1[EXPO: EXPO - EXPO_LENGTH];
-        assign expo = para2[EXPO: EXPO - EXPO_LENGTH];
-        assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]} >> dis;
-        assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]};
-        assign sign = para2[SIGN];
-    end
-    else begin
-        assign dis = para1[EXPO: EXPO - EXPO_LENGTH] - para2[EXPO: EXPO - EXPO_LENGTH];
-        assign expo = para1[EXPO: EXPO - EXPO_LENGTH];
-        assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]};
-        assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]} >> dis;
-        assign sign = para1[SIGN];
-    end
-    
-    assign expo_normalize = expo;
+//  determine op
+always @(para1 or para2) begin
+    operator = para1[`INPUT_WIDTH - 1] ^ para2[`INPUT_WIDTH - 1];
+
+    {op1, op2} = (para1[`INPUT_WIDTH - 2 : 0] >= para2[`INPUT_WIDTH - 2 : 0])
+                ? {para1, para2}
+                : {para2, para1}; // compare 2 parameters without sign
 end
-
-always @(signiPara1, signiPara2) begin
-    if(para2[SIGN] == para1[SIGN]) begin
-        assign {Cout, significand} = signiPara1 + signiPara2;
-    end
-    else begin
-        if(signiPara1 < signiPara2) begin
-            assign {Cout, significand} = signiPara2 - signiPara1;    
-        end
-        else assign {Cout, significand} = signiPara1 - signiPara2;
-    end
-
-    if(Cout == 1) begin
-        assign significand = (significand >>> 1) + (1 <<< SIGNI);
-        assign expo_normalize = expo_normalize + 1;
-        assign Cout = 0;
-    end    
-    else significand = significand;
-    
-    assign dif = SIGNI - $clog2(significand) + 1;
+//  separate op into sub-parts
+always @(op1, op2) begin
+    // 32-bit floating-point number format
+    // sign     | exponent  | fraction
+    // 1 bit    | 8 bits    | 23 bits
+    //MSB                           LSB
+    // the 24-bit significand is leading 1 bit fraction
+    S_op1 = {1'b1, op1[F_WIDTH - 1 : 0]};
+    S_op2 = {1'b1, op2[F_WIDTH - 1 : 0]};
+    E_op1 = op1[`INPUT_WIDTH - 2 : F_WIDTH];
+    E_op2 = op2[`INPUT_WIDTH - 2 : F_WIDTH];
 end
+// right shift the significand of lower number with the exponent differential 
+// round if any
+always @(E_op1, E_op2, S_op2) begin
+    if(E_op1 - E_op2 != 1'b0) S_shifted_op2 =  (S_op2 >> (E_op1 - E_op2)) + S_op2[(E_op1 - E_op2) - 1]; 
+    else S_shifted_op2 = S_op2;
+end 
 
-always @(dif) begin
-    if(dif != 0) begin        
-        assign significand = significand << dif;
-        assign expo_normalize = expo_normalize - dif;
-    end    
+BigALU ALU(.out(ALU_result), .op1(S_op1), .op2(S_shifted_op2), .operator(operator));
+// if alu is negative then 
+always @(ALU_result) begin
+    if(ALU_result[F_WIDTH + 1] == 1'b1) begin
+        // positive ALU value
+         ALU_pos_result = ~ALU_result + 1'b1;
+    end
 end
+NormalizedDecoder normalized_decoder(.result(normalized_result), .shift_times(shift_times), .in(ALU_pos_result));
 
-assign out = {sign, expo_normalize, significand[SIGNI - 1: 0]};
-
-assign under_overflow = (expo_normalize == 255 && significand[SIGNI - 1: 0] == 0) ? 1 : 0;
-
-endmodule
+always @(ALU_result, operator, para1, E_op1, shift_times, normalized_result) begin
+    if (operator == 1'b0 && ALU_result[F_WIDTH + 1]) begin
+        // add operator, need to normalize
+        S_out = para1[`INPUT_WIDTH - 1];
+        E_out = E_op1 + 1'b1;
+        under_overflow = (E_out == 8'd255);
+        F_out = (under_overflow) ? 23'd0 : ALU_result[F_WIDTH : 1] + ALU_result[0];
+    end
+    else if (operator == 1'b0) begin
+        // add operator, not normalize
+        S_out = para1[`INPUT_WIDTH - 1];
+        E_out = E_op1;
+        under_overflow = 0;
+        F_out = ALU_result[F_WIDTH - 1 : 0];
+    end
+    else if(operator == 1'b0) begin
+        // sub operator
+        S_out = ~ALU_result[F_WIDTH + 1];
+        E_out = (E_op1 > shift_times) ? E_op1 - shift_times : 8'hff;
+        under_overflow = ~(E_op1 > shift_times);
+        F_out = (under_overflow) ? 23'd0 : normalized_result;
+    end
+end
+always @(S_out, E_out, F_out) begin
+    out = {S_out, E_out, F_out};
+end
+endmodule   
