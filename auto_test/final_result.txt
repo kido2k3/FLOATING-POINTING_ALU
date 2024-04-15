@@ -1,2 +1,11 @@
-1: no pass
-Pass 0/3 test cases
+1: pass
+2: pass
+3: pass
+4: pass
+5: pass
+6: pass
+7: pass
+8: pass
+9: pass
+10: pass
+Pass 10/10 test cases
