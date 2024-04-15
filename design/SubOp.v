@@ -20,31 +20,31 @@ reg [EXPO_LENGTH: 0] dis = 0;
 reg [EXPO_LENGTH: 0] expo = 0;
 reg [EXPO_LENGTH: 0] expo_normalize = 0;
 
+
+reg [4: 0] dif = 0;
 reg sign = 0;
 reg Cout = 0;
 
-always @(*) begin
-    assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]};
-    assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]};
-
+always @(signiPara1, signiPara2) begin
     if(para1[EXPO: EXPO - EXPO_LENGTH] < para2[EXPO: EXPO - EXPO_LENGTH]) begin
         assign dis = para2[EXPO: EXPO - EXPO_LENGTH] - para1[EXPO: EXPO - EXPO_LENGTH];
         assign expo = para2[EXPO: EXPO - EXPO_LENGTH];
-        assign signiPara1 = signiPara1 >> dis;
+        assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]} >> dis;
+        assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]};
         assign sign = !para2[SIGN];
     end
     else begin
         assign dis = para1[EXPO: EXPO - EXPO_LENGTH] - para2[EXPO: EXPO - EXPO_LENGTH];
         assign expo = para1[EXPO: EXPO - EXPO_LENGTH];
-        assign signiPara2 = signiPara2 >> dis;
+        assign signiPara1 = {1'b1, para1[SIGNI - 1: 0]};
+        assign signiPara2 = {1'b1, para2[SIGNI - 1: 0]} >> dis;
         assign sign = para1[SIGN];
     end    
 
+    assign expo_normalize = expo;
 end
 
 always @(signiPara1, signiPara2) begin
-    assign expo_normalize = expo;
-
     if(para1[SIGN] == !para2[SIGN]) begin
         assign {Cout, significand} = signiPara1 + signiPara2;
     end
@@ -56,18 +56,20 @@ always @(signiPara1, signiPara2) begin
     end
 
     if(Cout == 1) begin
-        assign significand = significand >> 1;
-        assign significand = significand + 2**SIGNI;
+        assign significand = (significand >>> 1) + (1 <<< SIGNI);
         assign expo_normalize = expo_normalize + 1;
+        assign Cout = 0;
     end    
     else significand = significand;
+    
+    assign dif = SIGNI - $clog2(significand) + 1;
 end
 
-always @(negedge significand[SIGNI]) begin
-    while(significand[SIGNI] == 0) begin
-        assign significand = significand << 1;
-        assign expo_normalize = expo_normalize - 1;
-    end
+always @(dif) begin
+    if(dif != 0) begin        
+        assign significand = significand << dif;
+        assign expo_normalize = expo_normalize - dif;
+    end    
 end
 
 assign out = {sign, expo_normalize, significand[SIGNI - 1: 0]};

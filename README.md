@@ -30,7 +30,7 @@ pip install -r requirements.txt
         $finish;
     end
 ```
-- Run testbench file
+- Simulate testbench file
 - Run `check.py` file
 - The result is displayed in `final_result.txt`
 ```diff
@@ -38,5 +38,5 @@ pip install -r requirements.txt
 - A line (testcase) format in input.txt: <para1> <para2>
 - Example testcases are saved in multi_TestCase folder
 - testcase5 (overflow), and testcase6 (underflow) are used for build.txt, not input.txt.
-In this case, only run testbench file and obverse the test console
+In this case, only simulate testbench file and obverse the test console
 ```
