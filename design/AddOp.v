@@ -43,7 +43,7 @@ always @(para1 or para2) begin
                 : {para2, para1}; // compare 2 parameters without sign
     is_result_zero = (para1[`INPUT_WIDTH - 2 : 0] == para2[`INPUT_WIDTH - 2 : 0]) 
                     && (para1[`INPUT_WIDTH - 1] != para2[`INPUT_WIDTH - 1]);
-    add_with_zero = ~|para1 | ~|para2;
+    add_with_zero = ~|para1[`INPUT_WIDTH - 2 : 0] | ~|para2[`INPUT_WIDTH - 2 : 0];
 end
 //  separate op into sub-parts
 always @(op1, op2) begin
