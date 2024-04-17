@@ -9,7 +9,7 @@ module FP_ALU_tb;
     wire [31:0] out;
     wire under_overflow;
     wire zero;
-    FP_ALU uut(.para1(para1), .para2(para2), .out(out), .under_overflow(under_overflow), .zero(zero), .ALU_op(ALU_op));
+    FP_ALU uut(.para1(para1), .para2(para2), .out(out), .under_overflow(under_overflow), .zero(zero), .ALU_op(ALU_op) );
     
     initial begin
         $monitor("At time %t : para1 = %h, para2 = %h, ALU_op = %b, ; zero = %b, out = %h, under_overflow = %b ", $time, para1, para2, ALU_op, zero, out, under_overflow);
@@ -27,10 +27,7 @@ module FP_ALU_tb;
         $fclose(fd);
         $finish;
     end
-    initial begin
-        
-        
-    end
+    
     // initial begin
     //     $recordfile ("wave");
     //     $recordvars ("depth=0", MultiOp_tb);
