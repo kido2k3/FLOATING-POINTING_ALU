@@ -10,7 +10,7 @@ try:
         # Remove trailing newline characters and compare lines
         line1 = line1.rstrip('\n').lower()
         string = line1.split()
-        if len(string) != 0 and '(' not in string[0] and '.' not in string[0] and 'csa' not in string[0] and 'sub' not in string[0] and 'add' not in string[0]:
+        if len(string) != 0 and '(' not in string[0] and '.' not in string[0] and 'csa' not in string[0] and "_" not in string[0]:
             if string[0] in mach:
                 mach[string[0]] += 1
             else:
