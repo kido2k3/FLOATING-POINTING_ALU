@@ -4855,7 +4855,7 @@ module FP_ALU_SYN(out, under_overflow, zero, para1, para2, ALU_op, clk);
   AND2X1 g33575(.A (para2_ff[26]), .B (para1_ff[26]), .Y (n_575));
   AND2X1 g33577(.A (n_2741), .B (n_2735), .Y (n_574));
   NAND2X1 g33580(.A (n_508), .B (n_507), .Y (n_572));
-  NAND2X1 g33581(.A (para1_ff[31]), .B (sub_add_n_769), .Y (n_600));
+  NAND2X1 g33581(.A (para1_ff[31]), .B _(sub_add_n769), .Y (n_600));
   NOR2X2 g33583(.A (add_ALU_pos_result[2]), .B (add_ALU_pos_result[3]),
        .Y (n_598));
   NOR2X2 g33587(.A (sub_add_ALU_pos_result[4]), .B
